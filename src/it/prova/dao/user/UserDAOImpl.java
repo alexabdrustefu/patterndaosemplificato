@@ -192,13 +192,44 @@ public class UserDAOImpl extends AbstractMySQLDAO implements UserDAO {
 		return result;
 	}
 
-	// DA FARE PER ESERCIZIO
+	// =======================================================================================================
+	// esercizio che mi estrae tutti i cognome attraverso cognome input passato come
+	// parametro
 
 	@Override
 	public List<User> findAllByCognome(String cognomeInput) throws Exception {
-		// TODO Auto-generated method stub
-		return null;
-	}
+		// prima di tutto cerchiamo di capire se possiamo effettuare le operazioni
+		if (isNotActive())
+			throw new Exception("Connessione non attiva. Impossibile effettuare operazioni DAO.");
+		// faccio un controllo su cognome input nel quale se e null mi lancia un
+		// eccazione
+		if (cognomeInput == null)
+			throw new Exception("Valore di input non ammesso.");
+		ArrayList<User> result = new ArrayList<User>();
+		try (PreparedStatement ps = connection.prepareStatement("select * from user p where p.cognome like ? ;")) {
+			ps.setString(1, cognomeInput);
+			try (ResultSet rs = ps.executeQuery();) {
+				while (rs.next()) {
+					User userTemp = new User();
+					userTemp.setNome(rs.getString("NOME"));
+					userTemp.setCognome(rs.getString("COGNOME"));
+					userTemp.setLogin(rs.getString("LOGIN"));
+					userTemp.setPassword(rs.getString("PASSWORD"));
+					userTemp.setDateCreated(
+							rs.getDate("DATECREATED") != null ? rs.getDate("DATECREATED").toLocalDate() : null);
+					userTemp.setId(rs.getLong("ID"));
+					result.add(userTemp);
+				}
+			} // niente catch qui
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw e;
+		}
+
+		return result;
+	}// fine metodo
+		// =======================================================================================================
 
 	@Override
 	public List<User> findAllByLoginIniziaCon(String caratteriInizialiInput) throws Exception {
